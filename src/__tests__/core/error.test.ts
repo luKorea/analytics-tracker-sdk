@@ -1,15 +1,15 @@
 import { ErrorMonitor } from '../../core/error';
-import { Reporter } from '../../core/reporter';
+import { ReporterImpl } from '../../core/reporter';
 
 describe('ErrorMonitor', () => {
   let errorMonitor: ErrorMonitor;
-  let mockReporter: jest.Mocked<Reporter>;
+  let mockReporter: jest.Mocked<ReporterImpl>;
 
   beforeEach(() => {
     mockReporter = {
       report: jest.fn(),
       batchReport: jest.fn(),
-    } as any;
+    } as jest.Mocked<ReporterImpl>;
     errorMonitor = new ErrorMonitor(mockReporter);
   });
 

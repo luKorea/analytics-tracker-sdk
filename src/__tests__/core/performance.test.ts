@@ -9,7 +9,7 @@ describe('PerformanceMonitor', () => {
     mockReporter = {
       report: jest.fn(),
       batchReport: jest.fn(),
-    } as any;
+    } as jest.Mocked<Reporter>;
     performanceMonitor = new PerformanceMonitor(mockReporter);
   });
 

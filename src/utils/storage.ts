@@ -1,4 +1,52 @@
-import { Storage } from '../types';
+import { Storage as StorageInterface } from '../types';
+
+/**
+ * 本地存储实现类
+ * 提供基于 localStorage 的数据存储功能
+ */
+export class Storage implements StorageInterface {
+  /**
+   * 获取存储的值
+   * @param key - 存储键名
+   */
+  get(key: string): any {
+    try {
+      const value = localStorage.getItem(key);
+      return value ? JSON.parse(value) : null;
+    } catch (error) {
+      console.error('Storage get error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 设置存储值
+   * @param key - 存储键名
+   * @param value - 要存储的值
+   */
+  set(key: string, value: any): void {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error('Storage set error:', error);
+    }
+  }
+
+  /**
+   * 移除存储的值
+   * @param key - 要移除的键名
+   */
+  remove(key: string): void {
+    localStorage.removeItem(key);
+  }
+
+  /**
+   * 清空所有存储
+   */
+  clear(): void {
+    localStorage.clear();
+  }
+}
 
 /**
  * 本地存储实现类，使用 localStorage 作为存储介质
@@ -58,6 +106,10 @@ export class LocalStorage implements Storage {
    */
   remove(key: string): void {
     try {
+      if (!key && key !== '') {
+        console.error('LocalStorage remove error: Invalid key');
+        return;
+      }
       localStorage.removeItem(this.getKey(key));
     } catch (error) {
       console.error('LocalStorage remove error:', error);
@@ -69,9 +121,18 @@ export class LocalStorage implements Storage {
    */
   clear(): void {
     try {
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith(this.prefix)) {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(this.prefix)) {
+          keys.push(key);
+        }
+      }
+      keys.forEach(key => {
+        try {
           localStorage.removeItem(key);
+        } catch (error) {
+          console.error('LocalStorage clear error:', error);
         }
       });
     } catch (error) {

@@ -1,5 +1,11 @@
 import { EventData, Reporter } from '../types';
 
+export type { Reporter };
+
+export interface ReporterImpl extends Reporter {
+  report(eventType: string, data: Record<string, any>): void;
+}
+
 /**
  * 批量上报器实现类
  * 支持数据批量发送、自动重试、离线缓存等特性

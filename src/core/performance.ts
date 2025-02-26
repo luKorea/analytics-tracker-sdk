@@ -25,7 +25,7 @@ export class PerformanceMonitor {
 
     try {
       // 监控首次内容绘制 (FCP)
-      const fcpObserver = new PerformanceObserver(entryList => {
+      const fcpObserver = new PerformanceObserver((entryList) => {
         const entries = entryList.getEntries();
         const fcp = entries[0];
         if (fcp) {
@@ -36,7 +36,7 @@ export class PerformanceMonitor {
       fcpObserver.observe({ entryTypes: ['paint'] });
 
       // 监控最大内容绘制 (LCP)
-      const lcpObserver = new PerformanceObserver(entryList => {
+      const lcpObserver = new PerformanceObserver((entryList) => {
         const entries = entryList.getEntries();
         const lastEntry = entries[entries.length - 1];
         if (lastEntry) {
@@ -46,9 +46,9 @@ export class PerformanceMonitor {
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
 
       // 监控首次输入延迟 (FID)
-      const fidObserver = new PerformanceObserver(entryList => {
+      const fidObserver = new PerformanceObserver((entryList) => {
         const entries = entryList.getEntries();
-        const firstInput = entries[0];
+        const firstInput = entries[0] as PerformanceEventTiming;
         if (firstInput) {
           this.performanceData.fid = firstInput.processingStart - firstInput.startTime;
           fidObserver.disconnect();
@@ -59,20 +59,17 @@ export class PerformanceMonitor {
       // 监控累积布局偏移 (CLS)
       let clsValue = 0;
       let clsEntries: any[] = [];
-      const clsObserver = new PerformanceObserver(entryList => {
+      const clsObserver = new PerformanceObserver((entryList) => {
         const entries = entryList.getEntries();
         entries.forEach(entry => {
-          if (!entry.hadRecentInput) {
+          const layoutShift = entry as any;
+          if (!layoutShift.hadRecentInput) {
             const firstSessionEntry = clsEntries[0];
             const lastSessionEntry = clsEntries[clsEntries.length - 1];
-            if (
-              firstSessionEntry &&
-              entry.startTime - lastSessionEntry.startTime < 1000 &&
-              entry.startTime - firstSessionEntry.startTime < 5000
-            ) {
-              clsEntries.push(entry);
+            if (firstSessionEntry && entry.startTime - lastSessionEntry.startTime < 1000 && entry.startTime - firstSessionEntry.startTime < 5000) {
+              clsEntries.push(layoutShift);
             } else {
-              clsEntries = [entry];
+              clsEntries = [layoutShift];
             }
             if (clsEntries.length >= 1) {
               const clsSession = clsEntries.reduce((sum, entry) => sum + entry.value, 0);
@@ -91,10 +88,9 @@ export class PerformanceMonitor {
   }
 
   /**
-   * 收集导航计时指标
-   * 包括页面加载时间、DOM 解析时间等
+   * 收集页面加载时间指标
    */
-  collectNavigationTiming(): void {
+  collectPageLoadTiming(): void {
     if (typeof window === 'undefined' || !window.performance || !window.performance.timing) return;
 
     const timing = performance.timing;
@@ -106,17 +102,29 @@ export class PerformanceMonitor {
   }
 
   /**
-   * 获取收集到的性能指标数据
-   * @returns 包含各项性能指标的数据对象
+   * 收集 Web Vitals 指标
    */
-  getMetrics(): PerformanceData {
-    this.collectNavigationTiming();
+  collectWebVitals(): void {
+    this.collectPageLoadTiming();
+  }
+
+  /**
+   * 获取收集到的性能数据
+   */
+  getPerformanceData(): PerformanceData {
     return this.performanceData;
   }
 
   /**
+   * 获取性能指标
+   */
+  getMetrics(): PerformanceData {
+    return this.getPerformanceData();
+  }
+
+  /**
    * 销毁性能监控实例
-   * 断开所有性能观察器的连接
+   * 断开所有观察器连接
    */
   destroy(): void {
     if (this.observer) {
@@ -127,9 +135,8 @@ export class PerformanceMonitor {
 }
 
 /**
- * 创建性能监控实例的工厂函数
- * @returns PerformanceMonitor 实例
+ * 创建性能监控实例
  */
-export const createPerformanceMonitor = (): PerformanceMonitor => {
+export const createPerformanceMonitor = () => {
   return new PerformanceMonitor();
 };
